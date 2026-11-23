@@ -64,9 +64,6 @@
             @if ($destination->hasCoordinates())
                 <span class="bg-[#e8f5e9] text-[#0f5132] text-[10px] font-bold px-3 py-1 rounded-full border border-[#0f5132]/20">📍 Memiliki koordinat</span>
             @endif
-            @if ($destination->media !== '')
-                <span class="bg-gray-100 text-gray-700 text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1">📷 Media ontologi</span>
-            @endif
         </div>
 
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6">
@@ -96,14 +93,7 @@
     </div>
 
     @if ($seo->alternates !== [])
-        <div class="mb-6 flex flex-wrap items-center gap-2 text-xs">
-            <span class="font-semibold text-gray-600">Data RDF:</span>
-            @foreach ($seo->alternates as $alternate)
-                <a href="{{ $alternate['url'] }}" class="rounded-full border border-gray-200 bg-white px-3 py-1.5 font-semibold text-brand-primary hover:bg-brand-light">
-                    {{ $alternate['label'] }}
-                </a>
-            @endforeach
-        </div>
+        {{-- Data RDF links hidden --}}
     @endif
 
     <!-- Gallery -->
@@ -182,7 +172,6 @@
                 <div class="space-y-2 text-xs text-gray-600 mb-5">
                     <div class="flex justify-between gap-4 border-b border-gray-100 pb-2"><span>Kategori</span><span class="font-bold text-gray-900 text-right">{{ implode(', ', $destination->types) }}</span></div>
                     <div class="flex justify-between gap-4 border-b border-gray-100 pb-2"><span>Provinsi</span><span class="font-bold text-gray-900 text-right">{{ $destination->province() }}</span></div>
-                    <div class="flex justify-between gap-4 border-b border-gray-100 pb-2"><span>ID ontologi</span><span class="font-bold text-gray-900 text-right">ID <span property="ws:idDestinasi">{{ $destination->id }}</span></span></div>
                     <div class="flex justify-between gap-4 border-b border-gray-100 pb-2">
                         <span class="shrink-0">Jam operasional</span>
                         <span class="min-w-0 max-w-[65%] break-words whitespace-normal text-right font-bold text-gray-900">{{ $destination->openingHoursLabel() }}</span>

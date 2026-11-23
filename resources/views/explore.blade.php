@@ -94,10 +94,10 @@
             </a>
             @foreach ($types as $type)
                 <a href="{{ $urlFor(['jenis' => $type, 'page' => null]) }}" data-jenis="{{ $type }}" class="text-xs font-medium px-3 py-1.5 rounded-full transition {{ $activeType === $type ? 'bg-brand-primary text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300' }}">
-                    {{ $type }} ({{ \App\Support\IndonesianFormat::number($facets['types'][$type] ?? 0) }})
+                    {{ $type }}
                 </a>
             @endforeach
-            <a id="destination-reset" href="{{ route('destinations') }}" class="text-xs font-medium px-3 py-1.5 rounded-full transition bg-white border border-gray-200 text-brand-accent hover:border-brand-accent {{ $hasActiveFilters ? '' : 'hidden' }}">Hapus saringan</a>
+            <a id="destination-reset" href="{{ route('destinations') }}" class="text-xs font-medium px-3 py-1.5 rounded-full transition bg-white border border-gray-200 text-brand-accent hover:border-brand-accent {{ $hasActiveFilters ? '' : 'hidden' }}">Hapus filter</a>
         </div>
     </div>
 
