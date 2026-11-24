@@ -236,6 +236,134 @@ const initMapLegendDrag = (mapContainer) => {
     clampPanel();
 };
 
+const initMapLegendResize = (mapContainer) => {
+    const panel = mapContainer.querySelector('[data-map-legend]');
+    const resizeHandle = panel?.querySelector('[data-map-legend-resize]');
+
+    if (! panel || ! resizeHandle) {
+        return;
+    }
+
+    const categoriesContainer = panel.querySelector('[data-map-legend-categories]');
+    categoriesContainer?.addEventListener('wheel', (event) => {
+        event.stopPropagation();
+    }, { passive: true });
+
+    const minWidth = 210;
+    const maxWidth = 420;
+    const minHeight = 180;
+
+    let activePointerId = null;
+    let startX = 0;
+    let startY = 0;
+    let startWidth = 0;
+    let startHeight = 0;
+    let animationFrame = 0;
+    let pendingSize = null;
+
+    const applySize = (width, height) => {
+        const containerRect = mapContainer.getBoundingClientRect();
+        const panelRect = panel.getBoundingClientRect();
+        const currentLeft = panelRect.left - containerRect.left;
+        const currentTop = panelRect.top - containerRect.top;
+
+        const maxAvailableWidth = Math.max(minWidth, mapContainer.clientWidth - currentLeft);
+        const maxAvailableHeight = Math.max(minHeight, mapContainer.clientHeight - currentTop);
+        const maxHeight = Math.min(window.innerHeight * 0.75, maxAvailableHeight);
+        const maxW = Math.min(maxWidth, maxAvailableWidth);
+
+        const w = Math.min(Math.max(width, minWidth), maxW);
+        const h = Math.min(Math.max(height, minHeight), maxHeight);
+
+        panel.style.width = `${w}px`;
+        panel.style.height = `${h}px`;
+    };
+
+    const finishResize = (event) => {
+        if (event.pointerId !== activePointerId) {
+            return;
+        }
+
+        event.stopPropagation();
+
+        if (animationFrame !== 0) {
+            window.cancelAnimationFrame(animationFrame);
+            animationFrame = 0;
+        }
+
+        if (pendingSize !== null) {
+            applySize(pendingSize.width, pendingSize.height);
+            pendingSize = null;
+        }
+
+        const pointerId = activePointerId;
+        activePointerId = null;
+
+        if (resizeHandle.hasPointerCapture(pointerId)) {
+            resizeHandle.releasePointerCapture(pointerId);
+        }
+    };
+
+    resizeHandle.addEventListener('pointerdown', (event) => {
+        if (! event.isPrimary || (event.pointerType === 'mouse' && event.button !== 0)) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        activePointerId = event.pointerId;
+        startX = event.clientX;
+        startY = event.clientY;
+        startWidth = panel.offsetWidth;
+        startHeight = panel.offsetHeight;
+        pendingSize = null;
+        resizeHandle.setPointerCapture(activePointerId);
+    });
+
+    resizeHandle.addEventListener('pointermove', (event) => {
+        if (event.pointerId !== activePointerId) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const deltaX = event.clientX - startX;
+        const deltaY = event.clientY - startY;
+
+        pendingSize = {
+            width: startWidth + deltaX,
+            height: startHeight + deltaY,
+        };
+
+        if (animationFrame === 0) {
+            animationFrame = window.requestAnimationFrame(() => {
+                if (pendingSize !== null) {
+                    applySize(pendingSize.width, pendingSize.height);
+                    pendingSize = null;
+                }
+
+                animationFrame = 0;
+            });
+        }
+    });
+
+    resizeHandle.addEventListener('pointerup', finishResize);
+    resizeHandle.addEventListener('pointercancel', finishResize);
+    resizeHandle.addEventListener('lostpointercapture', finishResize);
+    resizeHandle.addEventListener('keydown', (event) => {
+        if (! ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+            return;
+        }
+
+        event.preventDefault();
+        applySize(
+            panel.offsetWidth + (event.key === 'ArrowRight' ? 16 : event.key === 'ArrowLeft' ? -16 : 0),
+            panel.offsetHeight + (event.key === 'ArrowDown' ? 16 : event.key === 'ArrowUp' ? -16 : 0),
+        );
+    });
+};
+
 const initLeafletMapPage = (container, config) => {
     const markerColors = config.colors ?? {};
     const map = L.map(container).setView([2.8, 98.6], 8);
@@ -1468,6 +1596,7 @@ export const initMaps = () => {
 
     if (container && typeof config.googleMapsKey === 'string' && config.googleMapsKey !== '') {
         initMapLegendDrag(container);
+        initMapLegendResize(container);
         loadGoogleMapsApi(config.googleMapsKey)
             .then((maps) => {
                 initGoogleMapPage(container, config, maps);
@@ -1484,6 +1613,7 @@ export const initMaps = () => {
             });
     } else if (container) {
         initMapLegendDrag(container);
+        initMapLegendResize(container);
         initLeafletMapPage(container, config);
     }
 

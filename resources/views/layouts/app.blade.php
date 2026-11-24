@@ -246,12 +246,14 @@
         <button
             id="chatbot-resize-handle"
             type="button"
-            class="absolute bottom-1 right-1 z-20 hidden flex h-7 w-7 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 cursor-nwse-resize touch-none"
+            class="absolute top-1 left-1 z-30 hidden h-[18px] w-[18px] items-center justify-center rounded text-gray-400 transition hover:text-gray-700 cursor-nwse-resize touch-none select-none"
             aria-label="Ubah ukuran jendela asisten"
             title="Tarik untuk mengubah ukuran"
         >
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 20h6v-6M10 20 20 10"/>
+            <svg class="h-3.5 w-3.5" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                <line x1="2" y1="12" x2="12" y2="2"/>
+                <line x1="2" y1="7" x2="7" y2="2"/>
+                <line x1="7" y1="12" x2="12" y2="7"/>
             </svg>
         </button>
         <p id="chatbot-status" class="sr-only" role="status" aria-live="polite"></p>

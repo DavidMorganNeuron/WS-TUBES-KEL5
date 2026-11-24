@@ -222,13 +222,14 @@ const initChatbot = () => {
     });
 
     const clampSize = (width, height) => {
-        const limits = popupSizeLimits();
-        const minimumWidth = Math.min(280, limits.width);
-        const minimumHeight = Math.min(360, limits.height);
+        const minWidth = 320;
+        const maxWidth = Math.min(680, window.innerWidth * 0.9);
+        const minHeight = 380;
+        const maxHeight = window.innerHeight * 0.85;
 
         return {
-            width: Math.min(Math.max(width, minimumWidth), limits.width),
-            height: Math.min(Math.max(height, minimumHeight), limits.height),
+            width: Math.min(Math.max(width, minWidth), maxWidth),
+            height: Math.min(Math.max(height, minHeight), maxHeight),
         };
     };
 
@@ -241,12 +242,25 @@ const initChatbot = () => {
         dialog.style.maxHeight = `${limits.height}px`;
     };
 
-    const applyPopupSize = (width, height) => {
-        state.size = clampSize(width, height);
+    const applyPopupSize = (width, height, anchorRight, anchorBottom) => {
+        const newSize = clampSize(width, height);
+
+        // If anchor points (right edge, bottom edge) are provided, adjust left/top
+        // so the right and bottom edges stay fixed while left-top corner moves.
+        if (anchorRight !== undefined && anchorBottom !== undefined && state.position) {
+            const newLeft = anchorRight - newSize.width;
+            const newTop = anchorBottom - newSize.height;
+            state.position = clampPosition(newLeft, newTop);
+            dialog.style.left = `${state.position.left}px`;
+            dialog.style.top = `${state.position.top}px`;
+        }
+
+        state.size = newSize;
         dialog.style.width = `${state.size.width}px`;
         dialog.style.height = `${state.size.height}px`;
 
-        if (state.position) {
+        // Only clamp position if no anchor was provided (anchor already set exact position)
+        if (anchorRight === undefined && state.position) {
             state.position = clampPosition(state.position.left, state.position.top);
             dialog.style.left = `${state.position.left}px`;
             dialog.style.top = `${state.position.top}px`;
@@ -617,7 +631,9 @@ const initChatbot = () => {
             return;
         }
 
-        applyPopupSize(pendingSize.width, pendingSize.height);
+        // Resize from top-left corner: right and bottom edges stay fixed.
+        // anchorRight and anchorBottom are the fixed right/bottom edges in viewport coords.
+        applyPopupSize(pendingSize.width, pendingSize.height, pendingSize.anchorRight, pendingSize.anchorBottom);
         pendingSize = null;
     };
 
@@ -635,6 +651,9 @@ const initChatbot = () => {
             startY: event.clientY,
             width: rect.width,
             height: rect.height,
+            // Lock the right and bottom edges in viewport coordinates
+            anchorRight: rect.right,
+            anchorBottom: rect.bottom,
         };
         resizeHandle.setPointerCapture(event.pointerId);
     });
@@ -644,9 +663,15 @@ const initChatbot = () => {
             return;
         }
 
+        // Dragging top-left handle to the left/up → grow; to the right/down → shrink.
+        const deltaX = resizeState.startX - event.clientX;
+        const deltaY = resizeState.startY - event.clientY;
+
         pendingSize = {
-            width: resizeState.width + event.clientX - resizeState.startX,
-            height: resizeState.height + event.clientY - resizeState.startY,
+            width: resizeState.width + deltaX,
+            height: resizeState.height + deltaY,
+            anchorRight: resizeState.anchorRight,
+            anchorBottom: resizeState.anchorBottom,
         };
 
         if (! resizeFrame) {
@@ -681,9 +706,12 @@ const initChatbot = () => {
         }
 
         event.preventDefault();
+        const rect = dialog.getBoundingClientRect();
         applyPopupSize(
-            dialog.offsetWidth + (event.key === 'ArrowRight' ? 16 : event.key === 'ArrowLeft' ? -16 : 0),
-            dialog.offsetHeight + (event.key === 'ArrowDown' ? 16 : event.key === 'ArrowUp' ? -16 : 0),
+            dialog.offsetWidth + (event.key === 'ArrowLeft' ? 16 : event.key === 'ArrowRight' ? -16 : 0),
+            dialog.offsetHeight + (event.key === 'ArrowUp' ? 16 : event.key === 'ArrowDown' ? -16 : 0),
+            rect.right,
+            rect.bottom,
         );
         persist();
     });

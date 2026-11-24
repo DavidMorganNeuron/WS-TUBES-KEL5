@@ -146,12 +146,12 @@
         </button>
 
         <div class="w-full h-full relative z-0" id="map" role="region" aria-label="Peta interaktif destinasi di Sumatera Utara">
-            <div data-map-legend class="absolute top-4 left-4 z-[1000] bg-white rounded-xl shadow-lg border border-gray-100 p-4 w-64">
-                <div data-map-legend-handle class="flex justify-between items-center mb-4 cursor-grab active:cursor-grabbing select-none touch-none">
+            <div data-map-legend class="absolute top-4 left-4 z-[1000] bg-white rounded-xl shadow-lg border border-gray-100 p-4 w-64 flex flex-col" style="min-width:210px;max-width:420px;min-height:180px;max-height:75vh;">
+                <div data-map-legend-handle class="flex justify-between items-center mb-4 cursor-grab active:cursor-grabbing select-none touch-none shrink-0">
                     <h2 class="font-bold text-xs text-gray-800 flex items-center gap-1">◈ LEGENDA PETA</h2>
                     <span class="text-lg leading-none text-gray-400" aria-hidden="true">⋮⋮</span>
                 </div>
-                <div class="space-y-2">
+                <div data-map-legend-categories class="space-y-2 overflow-y-auto flex-1 min-h-0 pr-0.5">
                     @foreach ($types as $type)
                         <a href="{{ $urlFor(['jenis' => $type]) }}" class="flex items-center justify-between text-xs font-medium text-gray-600 hover:text-brand-primary">
                             <span class="flex items-center gap-2">
@@ -161,12 +161,26 @@
                         </a>
                     @endforeach
                 </div>
-                <div class="border-t border-gray-100 mt-3 pt-3 flex items-center justify-between gap-2">
+                <div class="border-t border-gray-100 mt-3 pt-3 flex items-center justify-between gap-2 shrink-0">
                     <span class="text-[10px] text-gray-500">Tampilan penanda</span>
                     <button type="button" data-map-all class="rounded-lg bg-white border border-gray-200 px-3 py-1.5 text-[9px] font-bold text-gray-700 hover:bg-gray-50" title="Tampilkan penanda satu per satu" aria-label="Tampilkan penanda satu per satu" aria-pressed="false">SATUAN</button>
                 </div>
-                <div class="mt-2 text-[10px] text-gray-500">
+                <div class="mt-2 text-[10px] text-gray-500 shrink-0">
                     {{ \App\Support\IndonesianFormat::number($facets['with_coordinates']) }} destinasi memiliki koordinat.
+                </div>
+                {{-- Resize handle: pojok kanan bawah --}}
+                <div
+                    data-map-legend-resize
+                    class="absolute bottom-1 right-1 z-30 flex h-[18px] w-[18px] items-center justify-center cursor-nwse-resize touch-none select-none text-gray-400 hover:text-gray-700 transition"
+                    title="Tarik untuk mengubah ukuran"
+                    aria-label="Ubah ukuran legenda peta"
+                    role="button"
+                    tabindex="0"
+                >
+                    <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" class="w-3.5 h-3.5 pointer-events-none" aria-hidden="true">
+                        <line x1="5" y1="13" x2="13" y2="5"/>
+                        <line x1="9" y1="13" x2="13" y2="9"/>
+                    </svg>
                 </div>
             </div>
         </div>
