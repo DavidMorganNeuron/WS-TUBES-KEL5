@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:064e3b,50:047857,100:9a4e28&height=210&section=header&text=WayFinder%20Sumut&fontSize=46&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Semantic%20Web%20Tourism%20Knowledge%20Graph%20%26%20Hybrid%20AI&descAlignY=58&descSize=16" alt="WayFinder Sumut Banner" width="100%" />
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:064e3b,50:047857,100:9a4e28&height=210&section=header&text=WayFinder&fontSize=46&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Semantic%20Web%20Tourism%20Knowledge%20Graph%20%2B%20Hybrid%20AI&descAlignY=58&descSize=16" alt="WayFinder Banner" width="100%" />
 
 <a href="https://git.io/typing-svg">
   <img src="https://readme-typing-svg.demolab.com?font=Plus+Jakarta+Sans&weight=600&size=18&duration=3200&pause=1000&color=047857&center=true&vCenter=true&multiline=false&width=760&height=42&lines=304%2B+Destinasi+Wisata+Sumatera+Utara+dalam+Ontologi+RDF%2FTurtle;Hybrid+WayFinder+AI%3A+Rule-Based+Ontology+Engine+%2B+Gemini+AI;Google+Maps+Interaktif%2C+Marker+Clustering+%26+In-App+Route+Planner;Ekspor+RDF+(Turtle%2C+RDF%2FXML%2C+JSON-LD)+%26+Linked+Data+Wikidata" alt="Typing SVG" />
