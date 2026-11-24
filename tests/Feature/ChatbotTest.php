@@ -307,4 +307,47 @@ class ChatbotTest extends TestCase
 
         $this->postJson('/chatbot/send', ['message' => 'Halo'])->assertStatus(429);
     }
+
+    public function test_local_engine_understands_slang_recommendation_intent_typos_and_history_context(): void
+    {
+        config()->set('services.gemini.key', 'test-key');
+
+        // 1. General recommendation intent with slang & number without specific region/type
+        $general = $this->postJson('/chatbot/send', [
+            'message' => 'spill 3 rekomendasi wisata dong cuy',
+        ])->assertOk();
+        $this->assertCount(3, $general->json('destinations'));
+        $this->assertStringContainsString('**3', $general->json('reply'));
+
+        // 2. Slang category & price ('healing' => Alam, 'murmer' => murah, 'yg' => yang)
+        $slang = $this->postJson('/chatbot/send', [
+            'message' => 'tempat healing yg murmer',
+        ])->assertOk();
+        $this->assertNotEmpty($slang->json('destinations'));
+
+        // 3. Typo tolerance on region ('samosr' => Kabupaten Samosir) & destination ('danau tobaa' => Danau Toba)
+        $regionTypo = $this->postJson('/chatbot/send', [
+            'message' => 'rekomen wisata di samosr',
+        ])->assertOk();
+        $this->assertNotEmpty($regionTypo->json('destinations'));
+        $this->assertStringContainsString('Samosir', $regionTypo->json('reply'));
+
+        $destTypo = $this->postJson('/chatbot/send', [
+            'message' => 'info danau tobaa',
+        ])->assertOk();
+        $this->assertSame('Danau Toba', $destTypo->json('destinations.0.name'));
+
+        // 4. Context carry-over from $history ('yang gratis aja' inherits Kabupaten Karo + Alam)
+        $followUp = $this->postJson('/chatbot/send', [
+            'message' => 'yang gratis aja',
+            'history' => [
+                ['role' => 'user', 'text' => 'wisata alam di Kabupaten Karo'],
+                ['role' => 'model', 'text' => 'Berikut rekomendasi wisata Alam di Kabupaten Karo...'],
+            ],
+        ])->assertOk();
+        $this->assertNotEmpty($followUp->json('destinations'));
+        $this->assertStringContainsString('Karo', $followUp->json('reply'));
+
+        Http::assertNothingSent();
+    }
 }

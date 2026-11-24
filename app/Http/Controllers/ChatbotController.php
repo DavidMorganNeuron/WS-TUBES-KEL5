@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Data\Destination;
 use App\Services\Ontology\DestinationRepository;
+use App\Services\Ontology\TypoCorrector;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\JsonResponse;
@@ -35,14 +36,68 @@ class ChatbotController extends Controller
         'alam' => 'Alam', 'nature' => 'Alam', 'gunung' => 'Alam', 'air terjun' => 'Alam',
         'danau' => 'Alam', 'hutan' => 'Alam', 'waterfall' => 'Alam', 'lake' => 'Alam',
         'budaya' => 'Budaya', 'culture' => 'Budaya', 'cultural' => 'Budaya', 'heritage' => 'Budaya',
-        'museum' => 'Budaya', 'sejarah' => 'Budaya', 'history' => 'Budaya',
+        'museum' => 'Budaya', 'sejarah' => 'Budaya', 'history' => 'Budaya', 'adat' => 'Budaya',
         'religi' => 'Religi', 'religion' => 'Religi', 'religious' => 'Religi', 'masjid' => 'Religi',
         'gereja' => 'Religi', 'vihara' => 'Religi', 'klenteng' => 'Religi', 'church' => 'Religi',
+        'ibadah' => 'Religi',
         'bahari' => 'Bahari', 'marine' => 'Bahari', 'pantai' => 'Bahari', 'beach' => 'Bahari',
-        'pulau' => 'Bahari', 'island' => 'Bahari',
+        'pulau' => 'Bahari', 'island' => 'Bahari', 'laut' => 'Bahari',
         'kuliner' => 'Kuliner', 'culinary' => 'Kuliner', 'food' => 'Kuliner', 'makanan' => 'Kuliner',
+        'makan' => 'Kuliner', 'jajan' => 'Kuliner',
         'buatan' => 'Buatan', 'man-made' => 'Buatan', 'theme park' => 'Buatan', 'waterpark' => 'Buatan',
-        'hiburan' => 'Buatan',
+        'hiburan' => 'Buatan', 'wahana' => 'Buatan', 'taman' => 'Buatan',
+    ];
+
+    /**
+     * @var list<string>
+     */
+    private const RECOMMENDATION_INTENT_HINTS = [
+        'berikan', 'beri', 'rekomendasi', 'rekomendasikan', 'rekomen', 'rekomendasiin',
+        'saran', 'saranin', 'kasih', 'kasi', 'kasih tau', 'spill', 'spil',
+        'info', 'infokan', 'cariin', 'carikan', 'list', 'daftar',
+        'mana aja', 'apa aja', 'mana saja', 'apa saja',
+        'dong', 'cuy', 'min', 'guys', 'recommend', 'wisata terbaik',
+    ];
+
+    /**
+     * @var array<string, string>
+     */
+    private const SLANG_PHRASE_MAP = [
+        'kasih tau' => 'informasi',
+        'mana aja' => 'mana saja',
+        'apa aja' => 'apa saja',
+    ];
+
+    /**
+     * @var array<string, string>
+     */
+    private const SLANG_WORD_MAP = [
+        'yg' => 'yang',
+        'gak' => 'tidak',
+        'ga' => 'tidak',
+        'nggak' => 'tidak',
+        'ngga' => 'tidak',
+        'dmn' => 'di mana',
+        'dimana' => 'di mana',
+        'brp' => 'berapa',
+        'skrg' => 'sekarang',
+        'bgt' => 'banget',
+        'murmer' => 'murah',
+        'healing' => 'alam',
+        'foto2' => 'spot foto',
+        'estetik' => 'spot foto',
+        'instagramable' => 'spot foto',
+        'jajan' => 'kuliner',
+        'wahana' => 'buatan',
+    ];
+
+    /**
+     * @var list<string>
+     */
+    private const FOLLOW_UP_HINTS = [
+        'yang gratis', 'yang murah', 'gratis aja', 'murah aja', 'kalau ', 'kalo ',
+        'gimana ', 'bagaimana ', 'tambah ', 'lagi', 'selain itu', 'ada lagi',
+        'di medan', 'di karo', 'di samosir', 'di toba', 'yg gratis', 'yg murah',
     ];
 
     /**
@@ -98,7 +153,9 @@ class ChatbotController extends Controller
         ]);
 
         $message = trim($validated['message']);
-        $localReply = $this->tryLocalReply($message, $repository);
+        $history = $validated['history'] ?? [];
+        $normalizedQuery = $this->normalizeUserQuery($message, $repository);
+        $localReply = $this->tryLocalReply($message, $repository, $history, $normalizedQuery);
 
         if ($localReply !== null) {
             return response()->json($localReply);
@@ -109,7 +166,7 @@ class ChatbotController extends Controller
         if ($apiKey === '') {
             Log::warning('GEMINI_API_KEY belum dikonfigurasi; chatbot menggunakan pencarian lokal.');
 
-            return response()->json($this->fallbackSearchReply($message, $repository));
+            return response()->json($this->fallbackSearchReply($normalizedQuery['corrected'], $repository));
         }
 
         try {
@@ -123,10 +180,10 @@ class ChatbotController extends Controller
                 ->post($this->endpoint(), [
                     'systemInstruction' => [
                         'parts' => [
-                            ['text' => $this->systemInstruction($message, $repository)],
+                            ['text' => $this->systemInstruction($normalizedQuery['corrected'], $repository)],
                         ],
                     ],
-                    'contents' => $this->contents($message, $validated['history'] ?? []),
+                    'contents' => $this->contents($message, $history),
                     'generationConfig' => [
                         'maxOutputTokens' => 700,
                         'temperature' => 0.2,
@@ -137,13 +194,13 @@ class ChatbotController extends Controller
                 'message' => $exception->getMessage(),
             ]);
 
-            return response()->json($this->fallbackSearchReply($message, $repository));
+            return response()->json($this->fallbackSearchReply($normalizedQuery['corrected'], $repository));
         } catch (RequestException $exception) {
             Log::warning('Gemini gagal setelah percobaan ulang; chatbot menggunakan pencarian lokal.', [
                 'status' => $exception->response->status(),
             ]);
 
-            return response()->json($this->fallbackSearchReply($message, $repository));
+            return response()->json($this->fallbackSearchReply($normalizedQuery['corrected'], $repository));
         }
 
         if ($response->failed()) {
@@ -152,7 +209,7 @@ class ChatbotController extends Controller
                 'body' => Str::limit($response->body(), 500),
             ]);
 
-            return response()->json($this->fallbackSearchReply($message, $repository));
+            return response()->json($this->fallbackSearchReply($normalizedQuery['corrected'], $repository));
         }
 
         $reply = collect($response->json('candidates.0.content.parts', []))
@@ -161,50 +218,59 @@ class ChatbotController extends Controller
             ->implode("\n");
 
         if (trim($reply) === '') {
-            return response()->json($this->fallbackSearchReply($message, $repository));
+            return response()->json($this->fallbackSearchReply($normalizedQuery['corrected'], $repository));
         }
 
         return response()->json($this->responsePayload(
             trim($reply),
-            $this->matchingDestinations(Str::lower($message), $repository->all(), $repository),
+            $this->matchingDestinations($normalizedQuery['corrected'], $repository->all(), $repository),
         ));
     }
 
     /**
+     * @param  list<array{role: string, text: string}>  $history
+     * @param  array{clean: string, corrected: string, isRecommendationIntent: bool}|null  $normalizedQuery
      * @return array{reply: string, destinations: list<array{id: string, name: string, latitude: float, longitude: float, location: string}>}|null
      */
-    private function tryLocalReply(string $message, DestinationRepository $repository): ?array
-    {
-        $normalized = Str::lower(trim($message));
+    private function tryLocalReply(
+        string $message,
+        DestinationRepository $repository,
+        array $history = [],
+        ?array $normalizedQuery = null,
+    ): ?array {
+        $normalizedQuery ??= $this->normalizeUserQuery($message, $repository);
+        $clean = $normalizedQuery['clean'];
+        $corrected = $normalizedQuery['corrected'];
+        $isRecommendationIntent = $normalizedQuery['isRecommendationIntent'];
 
-        if ($normalized === '') {
+        if ($clean === '') {
             return null;
         }
 
-        if ($this->isGreeting($normalized)) {
+        if ($this->isGreeting($clean)) {
             return $this->responsePayload(
                 'Halo! Saya WayFinder AI, asisten wisata Sumatera Utara. Saya bisa membantu mencari destinasi berdasarkan kategori, wilayah, harga, rating, dan informasi destinasi. Contoh: "wisata alam di Kabupaten Karo", "tempat wisata gratis", atau "info Istana Maimun".',
             );
         }
 
-        if ($this->hasAny($normalized, ['berapa total', 'jumlah wisata', 'ada berapa', 'statistik'])) {
+        if ($this->hasAny($corrected, ['berapa total', 'jumlah wisata', 'ada berapa', 'statistik'])) {
             return $this->statisticsReply($repository);
         }
 
-        if ($this->isComplexNarrativeQuery($normalized)) {
+        if ($this->isComplexNarrativeQuery($corrected)) {
             return null;
         }
 
-        $region = $this->extractRegion($normalized, $repository);
-        $types = $this->extractTypes($normalized);
-        $requestedLimit = $this->extractRequestedLimit($normalized, 0);
-        $limit = $this->extractRequestedLimit($normalized);
-        $attributeTerms = $this->extractAttributeTerms($normalized, $repository);
+        $region = $this->extractRegion($corrected, $repository);
+        $types = $this->extractTypes($corrected);
+        $requestedLimit = $this->extractRequestedLimit($corrected, 0);
+        $limit = $this->extractRequestedLimit($corrected);
+        $attributeTerms = $this->extractAttributeTerms($corrected, $repository);
         if (in_array('Kuliner', $types, true)) {
             $attributeTerms = array_values(array_diff($attributeTerms, ['kuliner']));
         }
 
-        $mentioned = $this->findMentionedDestinations($normalized, $repository->all());
+        $mentioned = $this->findMentionedDestinations($corrected, $repository->all());
 
         if ($mentioned->isNotEmpty()) {
             $destination = $mentioned->first();
@@ -212,10 +278,35 @@ class ChatbotController extends Controller
             return $this->destinationDetailReply($destination, $repository);
         }
 
-        $wantsFree = $this->hasAny($normalized, self::FREE_HINTS);
-        $wantsCheap = $this->hasAny($normalized, self::CHEAP_HINTS);
-        $wantsTopRated = $this->hasAny($normalized, self::TOP_HINTS);
-        $wantsRecommendation = $this->hasAny($normalized, ['rekomendasi', 'recommend', 'wisata terbaik']);
+        $wantsFree = $this->hasAny($corrected, self::FREE_HINTS);
+        $wantsCheap = $this->hasAny($corrected, self::CHEAP_HINTS);
+        $wantsTopRated = $this->hasAny($corrected, self::TOP_HINTS);
+        $wantsRecommendation = $isRecommendationIntent || $this->hasAny($corrected, ['rekomendasi', 'recommend', 'wisata terbaik']);
+
+        $isFollowUp = false;
+        if ($history !== [] && ($region === null || $types === [])) {
+            $isShortFollowUp = mb_strlen($clean, 'UTF-8') <= 60
+                || $this->hasAny($clean, self::FOLLOW_UP_HINTS)
+                || $wantsFree
+                || $wantsCheap
+                || $wantsTopRated
+                || $attributeTerms !== []
+                || $requestedLimit > 0;
+
+            if ($isShortFollowUp) {
+                $historyContext = $this->extractHistoryContext($history, $repository);
+
+                if ($region === null && $historyContext['region'] !== null) {
+                    $region = $historyContext['region'];
+                    $isFollowUp = true;
+                }
+
+                if ($types === [] && $historyContext['types'] !== []) {
+                    $types = $historyContext['types'];
+                    $isFollowUp = true;
+                }
+            }
+        }
 
         if ($types !== [] || $region !== null || $wantsFree || $wantsCheap || $wantsTopRated
             || $wantsRecommendation || $attributeTerms !== [] || $requestedLimit > 0) {
@@ -228,6 +319,8 @@ class ChatbotController extends Controller
                 $wantsTopRated,
                 $attributeTerms,
                 $limit,
+                $wantsRecommendation,
+                $isFollowUp,
             );
         }
 
@@ -273,6 +366,8 @@ class ChatbotController extends Controller
         bool $wantsTopRated,
         array $attributeTerms,
         int $limit,
+        bool $wantsRecommendation = false,
+        bool $isFollowUp = false,
     ): array {
         $destinations = $repository->search([
             'jenis' => $types[0] ?? null,
@@ -318,9 +413,18 @@ class ChatbotController extends Controller
         $category = $types[0] ?? '';
         $subject = $category !== '' ? 'wisata '.$category : 'destinasi wisata';
         $location = $region !== null ? ' di '.$region : ' di Sumatera Utara';
-        $opening = $wantsCheap
-            ? "Ditemukan **{$count} {$subject}{$location}** dengan harga tiket terendah:"
-            : "Berikut **{$count} rekomendasi {$subject}{$location}** dengan rating tertinggi:";
+
+        if ($wantsCheap) {
+            $opening = "Ini dia **{$count} {$subject}{$location}** dengan harga tiket paling terjangkau:";
+        } elseif ($wantsFree) {
+            $opening = "Pas banget! Berikut **{$count} {$subject}{$location}** yang gratis tiket masuk:";
+        } elseif ($isFollowUp) {
+            $opening = "Siap, melanjutkan pencarian sebelumnya! Berikut **{$count} {$subject}{$location}** dengan rating tertinggi:";
+        } elseif ($wantsRecommendation && $category === '' && $region === null) {
+            $opening = "Tentu! Ini **{$count} rekomendasi {$subject}{$location}** dengan rating tertinggi yang layak kamu kunjungi:";
+        } else {
+            $opening = "Berikut **{$count} rekomendasi {$subject}{$location}** dengan rating tertinggi:";
+        }
 
         if ($attributeTerms !== []) {
             $opening = rtrim($opening, ':').' yang sesuai dengan '.implode(', ', $attributeTerms).':';
@@ -466,6 +570,249 @@ class ChatbotController extends Controller
             ->implode("\n");
     }
 
+    /**
+     * Normalisasi bahasa gaul, singkatan chat, dan koreksi typo ringan pada pesan pengguna.
+     *
+     * @return array{clean: string, corrected: string, isRecommendationIntent: bool}
+     */
+    private function normalizeUserQuery(string $rawMessage, ?DestinationRepository $repository = null): array
+    {
+        $lower = mb_strtolower(trim($rawMessage), 'UTF-8');
+        $clean = trim(preg_replace('/\s+/u', ' ', $lower) ?? $lower);
+
+        if ($clean === '') {
+            return [
+                'clean' => '',
+                'corrected' => '',
+                'isRecommendationIntent' => false,
+            ];
+        }
+
+        $isRecommendationIntent = $this->hasWordOrPhrase($clean, self::RECOMMENDATION_INTENT_HINTS);
+
+        $normalized = $clean;
+        foreach (self::SLANG_PHRASE_MAP as $phrase => $replacement) {
+            $normalized = preg_replace('/(?<!\p{L})'.preg_quote($phrase, '/').'(?!\p{L})/iu', $replacement, $normalized) ?? $normalized;
+        }
+
+        foreach (self::SLANG_WORD_MAP as $slang => $replacement) {
+            $normalized = preg_replace('/(?<!\p{L})'.preg_quote($slang, '/').'(?!\p{L})/iu', $replacement, $normalized) ?? $normalized;
+        }
+
+        $normalized = trim(preg_replace('/\s+/u', ' ', $normalized) ?? $normalized);
+        $corrected = $this->correctQueryTypos($normalized, $repository);
+
+        return [
+            'clean' => $clean,
+            'corrected' => $corrected,
+            'isRecommendationIntent' => $isRecommendationIntent,
+        ];
+    }
+
+    private function correctQueryTypos(string $text, ?DestinationRepository $repository): string
+    {
+        if ($repository === null) {
+            return $text;
+        }
+
+        $tokens = preg_split('/\s+/u', $text, -1, PREG_SPLIT_NO_EMPTY);
+        if (! is_array($tokens) || $tokens === []) {
+            return $text;
+        }
+
+        $vocabularyWords = $this->buildOntologyTokenVocabulary($repository);
+        if ($vocabularyWords === []) {
+            return $text;
+        }
+
+        $knownTokens = array_merge(
+            self::STOPWORDS,
+            self::FREE_HINTS,
+            self::CHEAP_HINTS,
+            self::TOP_HINTS,
+            self::COMPLEX_HINTS,
+            self::RECOMMENDATION_INTENT_HINTS,
+            array_keys(self::TYPE_HINTS),
+            array_values(self::SLANG_WORD_MAP),
+            [
+                'spot', 'foto', 'mana', 'saja', 'informasi', 'kabupaten', 'kota', 'sumatera', 'utara',
+                'total', 'jumlah', 'statistik', 'berapa', 'semua', 'seluruh', 'tercatat', 'murah',
+                'gratis', 'terdekat', 'dekat', 'buka', 'tutup', 'jam', 'harga', 'tiket', 'alamat',
+            ],
+        );
+
+        foreach ($repository->filterOptions() as $labels) {
+            foreach ($labels as $label) {
+                $labelWords = preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower((string) $label, 'UTF-8'), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+                foreach ($labelWords as $labelWord) {
+                    $knownTokens[] = $labelWord;
+                }
+            }
+        }
+        $knownTokens = array_values(array_unique($knownTokens));
+
+        $correctedTokens = $tokens;
+        $vocabEntries = [];
+        foreach ($vocabularyWords as $word => $freq) {
+            $vocabEntries[] = ['token' => (string) $word, 'frequency' => $freq];
+        }
+
+        $typoCorrector = null;
+        if (class_exists(TypoCorrector::class)) {
+            $typoCorrector = app()->bound(TypoCorrector::class)
+                ? app(TypoCorrector::class)
+                : new TypoCorrector;
+        }
+
+        foreach ($tokens as $index => $token) {
+            $stripped = trim($token, ".,!?;:\"'()[]{}");
+            if ($stripped === '' || mb_strlen($stripped, 'UTF-8') < 4 || ctype_digit($stripped)) {
+                continue;
+            }
+
+            if (in_array($stripped, $knownTokens, true) || isset($vocabularyWords[$stripped])) {
+                continue;
+            }
+
+            $replacement = null;
+            if ($typoCorrector instanceof TypoCorrector) {
+                $result = $typoCorrector->correct([$stripped], $vocabEntries);
+                $candidate = $result['tokens'][0] ?? $stripped;
+                if ($candidate !== $stripped && isset($vocabularyWords[$candidate])) {
+                    $replacement = $candidate;
+                }
+            }
+
+            if ($replacement === null) {
+                $replacement = $this->fuzzyMatchToken($stripped, array_keys($vocabularyWords));
+            }
+
+            if ($replacement !== null && $replacement !== $stripped) {
+                $correctedTokens[$index] = str_replace($stripped, $replacement, $token);
+            }
+        }
+
+        return implode(' ', $correctedTokens);
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function buildOntologyTokenVocabulary(DestinationRepository $repository): array
+    {
+        $vocabulary = [];
+
+        foreach (array_keys($repository->facets()['kabupaten'] ?? []) as $region) {
+            $words = preg_split('/[^\p{L}\p{N}-]+/u', mb_strtolower($region, 'UTF-8'), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+            foreach ($words as $word) {
+                if (mb_strlen($word, 'UTF-8') >= 4 && ! in_array($word, ['kabupaten', 'kota'], true)) {
+                    $vocabulary[$word] = ($vocabulary[$word] ?? 0) + 5;
+                }
+            }
+        }
+
+        foreach ($repository->all() as $destination) {
+            $nameText = trim(($destination->name ?? '').' '.($destination->alternativeName ?? ''));
+            $words = preg_split('/[^\p{L}\p{N}-]+/u', mb_strtolower($nameText, 'UTF-8'), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+            foreach ($words as $word) {
+                if (mb_strlen($word, 'UTF-8') >= 4) {
+                    $vocabulary[$word] = ($vocabulary[$word] ?? 0) + 2;
+                }
+            }
+        }
+
+        return $vocabulary;
+    }
+
+    /**
+     * @param  list<string>  $candidates
+     */
+    private function fuzzyMatchToken(string $token, array $candidates): ?string
+    {
+        if (strlen($token) > 50 || $token === '') {
+            return null;
+        }
+
+        $bestCandidate = null;
+        $bestScore = 0.0;
+        $tokenCompact = str_replace('-', '', $token);
+        $maxDistance = strlen($tokenCompact) <= 5 ? 1 : 2;
+
+        foreach ($candidates as $candidate) {
+            if (! is_string($candidate) || $candidate === '' || strlen($candidate) > 50) {
+                continue;
+            }
+
+            $candidateCompact = str_replace('-', '', $candidate);
+            if ($tokenCompact === $candidateCompact) {
+                return $candidate;
+            }
+
+            $distance = levenshtein($tokenCompact, $candidateCompact);
+            similar_text($tokenCompact, $candidateCompact, $similarity);
+
+            if (($distance <= $maxDistance && $similarity >= 75.0) || $similarity >= 82.0) {
+                $score = $similarity - ($distance * 5.0);
+                if ($score > $bestScore) {
+                    $bestScore = $score;
+                    $bestCandidate = $candidate;
+                }
+            }
+        }
+
+        return $bestCandidate;
+    }
+
+    /**
+     * @param  list<array{role: string, text: string}>  $history
+     * @return array{region: ?string, types: list<string>}
+     */
+    private function extractHistoryContext(array $history, DestinationRepository $repository): array
+    {
+        $recentUserMessages = collect(array_slice($history, -8))
+            ->filter(fn (array $item): bool => ($item['role'] ?? '') === 'user' && is_string($item['text'] ?? null))
+            ->reverse()
+            ->take(4);
+
+        $region = null;
+        $types = [];
+
+        foreach ($recentUserMessages as $item) {
+            $prev = $this->normalizeUserQuery((string) $item['text'], $repository)['corrected'];
+
+            if ($region === null) {
+                $region = $this->extractRegion($prev, $repository);
+            }
+
+            if ($types === []) {
+                $types = $this->extractTypes($prev);
+            }
+
+            if ($region !== null && $types !== []) {
+                break;
+            }
+        }
+
+        return [
+            'region' => $region,
+            'types' => $types,
+        ];
+    }
+
+    /**
+     * @param  list<string>  $phrases
+     */
+    private function hasWordOrPhrase(string $message, array $phrases): bool
+    {
+        foreach ($phrases as $phrase) {
+            if (preg_match('/(?<!\p{L})'.preg_quote($phrase, '/').'(?!\p{L})/iu', $message) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function extractRegion(string $message, DestinationRepository $repository): ?string
     {
         $regions = array_keys($repository->facets()['kabupaten'] ?? []);
@@ -474,6 +821,35 @@ class ChatbotController extends Controller
         foreach ($regions as $region) {
             if ($region !== '' && str_contains($message, Str::lower($region))) {
                 return $region;
+            }
+        }
+
+        foreach ($regions as $region) {
+            $short = trim((string) preg_replace('/^(?:kabupaten|kota)\s+/iu', '', $region));
+            if ($short !== '' && mb_strlen($short, 'UTF-8') >= 4
+                && preg_match('/(?<!\p{L})'.preg_quote(Str::lower($short), '/').'(?!\p{L})/iu', $message) === 1) {
+                return $region;
+            }
+        }
+
+        $tokens = preg_split('/[^\p{L}\p{N}]+/u', $message, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        foreach ($tokens as $token) {
+            if (strlen($token) < 4 || strlen($token) > 50) {
+                continue;
+            }
+
+            foreach ($regions as $region) {
+                $short = Str::lower(trim((string) preg_replace('/^(?:kabupaten|kota)\s+/iu', '', $region)));
+                if ($short === '' || strlen($short) > 50) {
+                    continue;
+                }
+
+                $maxDistance = strlen($token) <= 5 ? 1 : 2;
+                $distance = levenshtein($token, $short);
+                similar_text($token, $short, $similarity);
+                if (($distance <= $maxDistance && $similarity >= 75.0) || $similarity >= 82.0) {
+                    return $region;
+                }
             }
         }
 
@@ -508,7 +884,7 @@ class ChatbotController extends Controller
 
             if (preg_match('/^\s*(?:rb|ribu|k|jam|hari|malam|bintang|rating|km)\b/iu', $after) === 1
                 || preg_match('/\b(?:rp|harga|rating|bintang)\s*$/iu', $before) === 1
-                || preg_match('/\b(?:wisata|destinasi|rekomendasi|tempat)\b/iu', $context) !== 1) {
+                || preg_match('/\b(?:wisata|destinasi|rekomendasi|rekomen|saran|list|daftar|lagi|pilihan|tempat)\b/iu', $context) !== 1) {
                 continue;
             }
 
@@ -699,6 +1075,8 @@ class ChatbotController extends Controller
     {
         return <<<PROMPT
 Anda adalah WayFinder AI, pemandu wisata digital untuk destinasi di Sumatera Utara.
+Anda memahami bahasa gaul Indonesia, singkatan chat sehari-hari, maupun kesalahan ketik pengguna dengan ramah dan santai, tanpa kaku.
+Selalu perhatikan konteks pesan-pesan sebelumnya pada riwayat percakapan (contents) ketika pengguna mengajukan pertanyaan lanjutan seperti "yang dekat situ apa?", "bandingkan keduanya", atau "buatkan itinerary-nya".
 Jawab dengan ramah, ringkas, dan informatif. Jangan membuka jawaban dengan sapaan pembuka.
 Gunakan hanya data dari konteks ontologi di bawah. Jika data tidak tersedia, katakan terus terang
 bahwa informasinya belum tercatat dan jangan mengarang angka, alamat, atau nomor kontak.
