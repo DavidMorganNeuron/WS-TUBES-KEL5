@@ -1,5 +1,8 @@
+import { initWayfinderAnimations, refreshWayfinderAnimations } from './animations';
 import { initChatbotWidget } from './chatbot';
 import { initMaps } from './map';
+
+window.refreshWayfinderAnimations = refreshWayfinderAnimations;
 
 const debounce = (callback, delay = 250) => {
     let timeoutId;
@@ -250,6 +253,7 @@ const initLiveDestinations = () => {
             }
 
             results.innerHTML = payload.html;
+            window.refreshWayfinderAnimations?.(results);
 
             if (reset) {
                 reset.classList.toggle('hidden', ! payload.has_filters);
@@ -388,6 +392,7 @@ const initLiveMap = () => {
             }
 
             results.innerHTML = payload.html;
+            window.refreshWayfinderAnimations?.(results);
 
             setText('map-sidebar-count', numberFormatter.format(payload.matchCount));
             setText('map-marker-count', numberFormatter.format(payload.markerCount));
@@ -812,6 +817,7 @@ const init = () => {
     initShareButton();
     initChatbotWidget();
     initMaps();
+    initWayfinderAnimations();
 };
 
 if (document.readyState === 'loading') {

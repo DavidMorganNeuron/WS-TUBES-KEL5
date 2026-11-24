@@ -66,9 +66,9 @@
             @endif
         </div>
 
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6" data-reveal-up>
             <div class="min-w-0">
-                <h1 class="text-4xl md:text-5xl font-serif font-bold text-gray-900 mb-2 leading-tight" property="schema:name ws:namaDestinasi">{{ $destination->name }}</h1>
+                <h1 class="text-4xl md:text-5xl font-serif font-bold text-gray-900 mb-2 leading-tight" property="schema:name ws:namaDestinasi" data-reveal-words>{{ $destination->name }}</h1>
                 @if ($destination->alternativeName !== '' && $destination->alternativeName !== $destination->name)
                     <p class="text-lg text-gray-500 italic mb-2">{{ $destination->alternativeName }}</p>
                 @endif
@@ -97,7 +97,7 @@
     @endif
 
     <!-- Gallery -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10 md:h-[520px]">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10 md:h-[520px]" data-reveal-up>
         <div class="md:col-span-2 relative rounded-2xl overflow-hidden h-72 md:h-full min-h-0 bg-gray-200 skeleton-shimmer">
             <img src="{{ $destination->media === '' ? $destination->imageUrl(1600) : $seo->imageUrl }}" @if (! $seo->isPlaceholderImage) property="schema:image" @endif class="absolute inset-0 w-full h-full object-cover transition-opacity duration-300" alt="{{ $destination->name }}" onload="this.closest('.skeleton-shimmer')?.classList.remove('skeleton-shimmer')" onerror="this.closest('.skeleton-shimmer')?.classList.remove('skeleton-shimmer')">
             @include('partials.image-attribution', ['destination' => $destination])
@@ -156,7 +156,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
 
         <!-- Sidebar (ringkasan pengunjung paling atas) -->
-        <aside class="space-y-6 lg:order-2 lg:sticky lg:top-24 min-w-0">
+        <aside class="space-y-6 lg:order-2 lg:sticky lg:top-24 min-w-0" data-reveal-up>
             <div class="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
                 <div class="flex justify-between items-start mb-4 gap-4">
                     <div class="min-w-0">
@@ -201,7 +201,7 @@
         <div class="lg:col-span-2 lg:order-1 space-y-6 min-w-0">
 
             <!-- About -->
-            <div class="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
+            <div class="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm" data-reveal-up>
                 <p class="text-xs font-bold text-brand-accent uppercase tracking-widest mb-2 flex items-center gap-2">📖 Kisah destinasi</p>
                 <h2 class="text-3xl font-serif font-bold text-gray-900 mb-4">Tentang {{ $destination->name }}</h2>
 
@@ -265,7 +265,7 @@
             />
 
             <!-- Visitor Information -->
-            <div class="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
+            <div class="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm" data-reveal-up>
                 <div class="mb-6">
                     <h2 class="text-2xl font-serif font-bold text-gray-900 mb-1">Informasi pengunjung</h2>
                     <p class="text-xs text-gray-500">Jam operasional, tiket masuk, dan kanal kontak resmi.</p>
@@ -331,7 +331,7 @@
 
             <!-- Facilities & Activities -->
             @if ($destination->facilities !== [] || $destination->activities !== [])
-                <div class="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
+                <div class="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm" data-reveal-up>
                         <p class="text-xs font-bold text-brand-accent uppercase tracking-widest mb-2 flex items-center gap-2">🌿 Fasilitas & pengalaman</p>
                         <h2 class="text-2xl font-serif font-bold text-gray-900 mb-6">Fasilitas yang tersedia dan aktivitas</h2>
 
@@ -376,7 +376,7 @@
             @endif
 
             <!-- Location -->
-            <div class="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
+            <div class="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm" data-reveal-up>
                 <div class="flex justify-between items-end gap-4 mb-4">
                     <div class="min-w-0">
                         <h2 class="text-2xl font-serif font-bold text-gray-900 mb-1">Lokasi &amp; akses</h2>
@@ -409,6 +409,7 @@
                     <div
                         class="rounded-xl overflow-hidden h-64 border border-gray-200 bg-gray-100 relative z-0"
                         id="detail-map"
+                        data-lenis-prevent
                         data-id="{{ $destination->id }}"
                         data-latitude="{{ json_encode($destination->latitude) }}"
                         data-longitude="{{ json_encode($destination->longitude) }}"
@@ -437,9 +438,9 @@
                 @php
                     $neighborResources = collect($linkedData->neighbors)->keyBy('destinationId');
                 @endphp
-                <div class="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
+                <div class="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm" data-reveal-up>
                     <h2 class="text-xl font-serif font-bold text-gray-900 mb-4">Destinasi terdekat</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" data-motion-grid>
                         @foreach ($nearbyDestinations as $item)
                             @php
                                 $neighbor = $neighborResources->get($item->id);
@@ -462,7 +463,7 @@
             <!-- Related -->
             <!-- Other Categories -->
 @if (!empty($otherTypes))
-<div class="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
+<div class="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm" data-reveal-up>
     <div class="flex justify-between items-end gap-4 mb-6">
         <div>
             <p class="text-xs font-bold text-brand-accent uppercase tracking-widest mb-1">Jelajahi lebih banyak</p>
@@ -475,7 +476,7 @@
     @if ($crossCategory->isEmpty())
         <p class="text-sm text-gray-500">Tidak ada destinasi dari kategori lain dalam ontologi.</p>
     @else
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" data-motion-grid>
             @foreach ($crossCategory as $item)
                 <x-destination-card :destination="$item" :show-description="false" />
             @endforeach

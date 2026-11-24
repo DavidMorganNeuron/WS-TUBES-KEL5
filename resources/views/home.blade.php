@@ -13,12 +13,12 @@
     <div class="mb-10">
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6">
             <div>
-                <h1 class="text-4xl md:text-5xl font-serif font-bold text-gray-900 mb-4">Jelajahi destinasi Sumatera Utara</h1>
-                <p class="text-gray-600 text-lg max-w-2xl">
+                <h1 class="text-4xl md:text-5xl font-serif font-bold text-gray-900 mb-4" data-reveal-words>Jelajahi destinasi Sumatera Utara</h1>
+                <p class="text-gray-600 text-lg max-w-2xl" data-reveal-up>
                     {{ \App\Support\IndonesianFormat::number($facets['total']) }} destinasi pilihan dari ontologi pariwisata Sumatera Utara.
                 </p>
             </div>
-            <form action="{{ route('destinations') }}" method="GET" class="flex w-full lg:w-auto gap-2" data-live-suggest data-suggest-url="{{ route('destinations.suggest') }}" autocomplete="off" role="search">
+            <form action="{{ route('destinations') }}" method="GET" class="flex w-full lg:w-auto gap-2" data-live-suggest data-suggest-url="{{ route('destinations.suggest') }}" autocomplete="off" role="search" data-reveal-up>
                 <div class="relative flex-grow lg:w-72">
                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true">🔍</span>
                     <input type="text" name="q" placeholder="Cari destinasi..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-brand-primary" autocomplete="off" aria-label="Cari destinasi" aria-autocomplete="list" aria-haspopup="listbox" aria-controls="dashboard-search-suggestions" aria-expanded="false">
@@ -31,8 +31,8 @@
     </div>
 
     <!-- Stat Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-start">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12" data-reveal-stagger>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-start" data-reveal-up>
             <div>
                 <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Total destinasi</p>
                 <h3 class="text-2xl font-bold text-gray-900 mb-1">{{ \App\Support\IndonesianFormat::number($facets['total']) }}</h3>
@@ -43,7 +43,7 @@
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-start">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-start" data-reveal-up>
             <div>
                 <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Kategori</p>
                 <h3 class="text-2xl font-bold text-gray-900 mb-1">{{ \App\Support\IndonesianFormat::number(collect($facets['types'])->filter()->count()) }} jenis</h3>
@@ -54,7 +54,7 @@
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-start">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-start" data-reveal-up>
             <div>
                 <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Rata-rata penilaian</p>
                 <h3 class="text-2xl font-bold text-gray-900 mb-1">{{ \App\Support\IndonesianFormat::number($facets['average_rating'], 2) }} / 5</h3>
@@ -71,7 +71,7 @@
         <div class="lg:col-span-2 space-y-8">
 
             @if ($featured)
-                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden" data-reveal-up>
                     <div class="relative h-72 bg-gray-200 skeleton-shimmer overflow-hidden">
                         <img src="{{ $featured->imageUrl(1600) }}" alt="{{ $featured->name }}" class="w-full h-full object-cover transition-opacity duration-300" onload="this.closest('.skeleton-shimmer')?.classList.remove('skeleton-shimmer')" onerror="this.closest('.skeleton-shimmer')?.classList.remove('skeleton-shimmer')">
                         @include('partials.image-attribution', ['destination' => $featured])
@@ -101,16 +101,16 @@
                 </div>
             @endif
 
-            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8" data-reveal-up>
                 <div class="flex justify-between items-end gap-4 mb-6">
                     <div>
                         <p class="text-xs font-bold text-brand-accent uppercase tracking-widest mb-1">Pilihan kurasi</p>
-                        <h2 class="text-3xl font-serif font-bold text-gray-900">Lima destinasi dengan penilaian tertinggi</h2>
+                        <h2 class="text-3xl font-serif font-bold text-gray-900" data-reveal-words>Lima destinasi dengan penilaian tertinggi</h2>
                     </div>
                     <a href="{{ route('destinations', ['sort' => 'rating']) }}" class="text-xs font-bold text-brand-accent hover:underline whitespace-nowrap">Lihat semua</a>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" data-motion-grid>
                     @foreach ($highlights->take(4) as $destination)
                         <x-destination-card :destination="$destination" :show-description="false" />
                     @endforeach
@@ -122,7 +122,7 @@
         <!-- Sidebar -->
         <div class="space-y-8">
 
-            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6" data-reveal-up>
                 <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Rincian koleksi</p>
                 <h3 class="text-xl font-serif font-bold mb-6">Destinasi menurut kategori</h3>
 
@@ -144,7 +144,7 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6" data-reveal-up>
                 <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Cakupan wilayah</p>
                 <h3 class="text-xl font-serif font-bold mb-6">Persebaran destinasi</h3>
 
@@ -176,7 +176,7 @@
         </div>
     </div>
     @if ($topRegion !== null)
-        <div class="mt-8">
+        <div class="mt-8" data-reveal-up>
             <x-info-wilayah
                 :region="$wikidataRegion"
                 :region-name="$topRegion['label']"

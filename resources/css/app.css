@@ -303,6 +303,18 @@ html.dark .prose {
     --tw-prose-td-borders: #374151;
 }
 
+/* Word reveal and animation helper classes */
+.word-wrap {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: top;
+}
+
+.word-inner {
+    display: inline-block;
+    will-change: transform, opacity;
+}
+
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -315,5 +327,16 @@ html.dark .prose {
 
     .skeleton-shimmer::after {
         animation: none;
+    }
+
+    [data-reveal-words],
+    [data-reveal-up],
+    [data-motion-card],
+    .destination-card,
+    .word-wrap,
+    .word-inner {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
     }
 }

@@ -31,11 +31,12 @@
         resource="{{ $rdfaResource }}"
         @if (is_string($rdfaType) && $rdfaType !== '') typeof="{{ $rdfaType }}" @endif
     @endif
-    class="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 flex flex-col hover:shadow-md transition"
+    class="destination-card bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 flex flex-col hover:shadow-md transition-shadow duration-300"
+    data-motion-card
 >
     <div class="relative h-56 bg-gray-100 skeleton-shimmer overflow-hidden">
-        <a href="{{ $detailUrl }}" class="block h-full">
-            <img src="{{ $destination->imageUrl() }}" alt="{{ $destination->name }}" class="w-full h-full object-cover transition-opacity duration-300" loading="lazy" onload="this.closest('.skeleton-shimmer')?.classList.remove('skeleton-shimmer')" onerror="this.closest('.skeleton-shimmer')?.classList.remove('skeleton-shimmer')">
+        <a href="{{ $detailUrl }}" class="block h-full overflow-hidden">
+            <img src="{{ $destination->imageUrl() }}" alt="{{ $destination->name }}" class="w-full h-full object-cover transition-opacity duration-300 will-change-transform" loading="lazy" onload="this.closest('.skeleton-shimmer')?.classList.remove('skeleton-shimmer')" onerror="this.closest('.skeleton-shimmer')?.classList.remove('skeleton-shimmer')">
         </a>
         @include('partials.image-attribution', ['destination' => $destination])
         <div class="absolute top-3 left-3 right-3 flex flex-wrap gap-1">

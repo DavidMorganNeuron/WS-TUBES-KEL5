@@ -30,12 +30,12 @@
         </span>
         <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
             <div>
-                <h1 class="text-4xl md:text-5xl font-serif font-bold text-gray-900 mb-4">Jelajahi Destinasi Sumatera Utara</h1>
-                <p class="text-gray-600 text-lg max-w-2xl">
+                <h1 class="text-4xl md:text-5xl font-serif font-bold text-gray-900 mb-4" data-reveal-words>Jelajahi Destinasi Sumatera Utara</h1>
+                <p class="text-gray-600 text-lg max-w-2xl" data-reveal-up>
                     Temukan {{ \App\Support\IndonesianFormat::number($facets['total']) }} destinasi pilihan dari ontologi pariwisata, mulai dari keajaiban alam dan monumen bersejarah hingga pengalaman budaya di Sumatera Utara.
                 </p>
             </div>
-            <div class="flex gap-3">
+            <div class="flex gap-3" data-reveal-up>
                 <span class="bg-white border border-gray-200 text-gray-600 text-xs font-bold px-4 py-2 rounded-full shadow-sm">
                     {{ \App\Support\IndonesianFormat::number($facets['with_coordinates']) }} memiliki koordinat
                 </span>
@@ -47,7 +47,7 @@
     </div>
 
     <!-- Filter Bar -->
-    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-8 space-y-4">
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-8 space-y-4" data-reveal-up>
         <form id="destination-filters" action="{{ route('destinations') }}" method="GET" class="flex flex-col lg:flex-row gap-4 justify-between items-center" data-live-destinations data-live-url="{{ route('destinations.live') }}" autocomplete="off" role="search" aria-label="Cari dan saring destinasi">
             @if ($activeType !== '')
                 <input type="hidden" name="jenis" value="{{ $activeType }}">
@@ -107,10 +107,10 @@
     </div>
 
     <!-- Banner CTA -->
-    <div class="bg-brand-dark text-white rounded-3xl p-8 md:p-12 relative overflow-hidden flex flex-col md:flex-row justify-between items-center gap-8 shadow-lg">
+    <div class="bg-brand-dark text-white rounded-3xl p-8 md:p-12 relative overflow-hidden flex flex-col md:flex-row justify-between items-center gap-8 shadow-lg" data-reveal-up>
         <div class="relative z-10">
             <p class="text-xs font-bold text-brand-accent tracking-widest uppercase mb-2">🗺️ RENCANAKAN PERJALANAN</p>
-            <h3 class="text-3xl md:text-4xl font-serif font-bold mb-4">Lihat semua destinasi di peta interaktif</h3>
+            <h3 class="text-3xl md:text-4xl font-serif font-bold mb-4" data-reveal-words>Lihat semua destinasi di peta interaktif</h3>
             <p class="text-gray-300 text-sm max-w-2xl">Jelajahi destinasi berdasarkan kategori dan kabupaten atau kota, lalu pilih penanda untuk membuka detail destinasi.</p>
         </div>
         <div class="flex flex-col sm:flex-row gap-3 relative z-10 w-full md:w-auto">

@@ -8,7 +8,7 @@
         <a href="{{ route('destinations') }}" class="inline-block bg-brand-accent hover:bg-orange-800 text-white text-sm font-bold px-5 py-2.5 rounded-full transition">Hapus semua saringan</a>
     </div>
 @else
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10" data-motion-grid>
         @foreach ($destinations as $destination)
             <x-destination-card :destination="$destination" />
         @endforeach

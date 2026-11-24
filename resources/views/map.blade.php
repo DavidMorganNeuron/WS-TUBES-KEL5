@@ -37,7 +37,7 @@
 <div class="flex h-[calc(100vh-80px)] overflow-hidden relative">
 
     <!-- SIDEBAR -->
-    <div id="map-sidebar" class="w-[400px] max-md:w-[88vw] max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-[1200] bg-white border-r border-gray-200 flex-col z-10 shadow-lg hidden md:flex min-h-0">
+    <div id="map-sidebar" data-lenis-prevent class="w-[400px] max-md:w-[88vw] max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-[1200] bg-white border-r border-gray-200 flex-col z-10 shadow-lg hidden md:flex min-h-0">
         <div data-map-browser-header class="p-5 border-b border-gray-100 space-y-4 bg-[#f8faf9]">
             <div class="flex justify-between items-start gap-3">
                 <div>
@@ -70,7 +70,7 @@
             </div>
         </div>
 
-        <section id="map-route-panel" class="hidden flex-grow min-h-0 flex-col bg-white" aria-label="Petunjuk arah perjalanan">
+        <section id="map-route-panel" data-lenis-prevent class="hidden flex-grow min-h-0 flex-col bg-white" aria-label="Petunjuk arah perjalanan">
             <header class="flex items-center justify-between gap-3 p-4 border-b border-gray-200">
                 <div>
                     <p class="text-[10px] font-bold uppercase tracking-wider text-brand-primary">Rute perjalanan</p>
@@ -129,7 +129,7 @@
             </footer>
         </section>
 
-        <div id="map-results" class="flex-grow overflow-y-auto p-4 space-y-4 bg-[#f8faf9]" role="region" aria-label="Hasil destinasi di peta" aria-busy="false">
+        <div id="map-results" data-lenis-prevent class="flex-grow overflow-y-auto p-4 space-y-4 bg-[#f8faf9]" role="region" aria-label="Hasil destinasi di peta" aria-busy="false">
             @include('partials.map-results', ['results' => $results, 'matchCount' => $matchCount, 'searchPlan' => $searchPlan, 'routeName' => 'map'])
         </div>
 
@@ -145,13 +145,13 @@
             ☰ Destinasi (<span id="map-sidebar-count">{{ \App\Support\IndonesianFormat::number($matchCount) }}</span>)
         </button>
 
-        <div class="w-full h-full relative z-0" id="map" role="region" aria-label="Peta interaktif destinasi di Sumatera Utara">
-            <div data-map-legend class="absolute top-4 left-4 z-[1000] bg-white rounded-xl shadow-lg border border-gray-100 p-4 w-64 flex flex-col" style="min-width:210px;max-width:420px;min-height:180px;max-height:75vh;">
+        <div class="w-full h-full relative z-0" id="map" role="region" data-lenis-prevent aria-label="Peta interaktif destinasi di Sumatera Utara">
+            <div data-map-legend data-lenis-prevent class="absolute top-4 left-4 z-[1000] bg-white rounded-xl shadow-lg border border-gray-100 p-4 w-64 flex flex-col" style="min-width:210px;max-width:420px;min-height:180px;max-height:75vh;">
                 <div data-map-legend-handle class="flex justify-between items-center mb-4 cursor-grab active:cursor-grabbing select-none touch-none shrink-0">
                     <h2 class="font-bold text-xs text-gray-800 flex items-center gap-1">◈ LEGENDA PETA</h2>
                     <span class="text-lg leading-none text-gray-400" aria-hidden="true">⋮⋮</span>
                 </div>
-                <div data-map-legend-categories class="space-y-2 overflow-y-auto flex-1 min-h-0 pr-0.5">
+                <div data-map-legend-categories data-lenis-prevent class="space-y-2 overflow-y-auto flex-1 min-h-0 pr-0.5">
                     @foreach ($types as $type)
                         <a href="{{ $urlFor(['jenis' => $type]) }}" class="flex items-center justify-between text-xs font-medium text-gray-600 hover:text-brand-primary">
                             <span class="flex items-center gap-2">
