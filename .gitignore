@@ -7,6 +7,12 @@
 .phpunit.result.cache
 /.codex
 /.cursor/
+/.claude/
+/.gemini/
+/.github/copilot-instructions.md
+/AGENTS.md
+/CLAUDE.md
+/boost.json
 /.idea
 /.nova
 /.phpunit.cache

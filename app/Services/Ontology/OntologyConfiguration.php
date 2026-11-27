@@ -13,14 +13,9 @@ final class OntologyConfiguration
      */
     public static function validate(array $configuration): void
     {
-        if (! in_array($configuration['driver'] ?? null, ['fuseki', 'ttl'], true)) {
-            throw new InvalidArgumentException('ONTOLOGY_DRIVER harus bernilai "fuseki" atau "ttl".');
-        }
-
-        foreach (['ttl_path', 'v2_source_path', 'wikidata_regions_path'] as $pathKey) {
-            if (! is_string($configuration[$pathKey] ?? null) || trim($configuration[$pathKey]) === '') {
-                throw new InvalidArgumentException("Konfigurasi ontologi {$pathKey} wajib berupa path yang tidak kosong.");
-            }
+        $regionsPath = $configuration['wikidata_regions_path'] ?? null;
+        if (! is_string($regionsPath) || trim($regionsPath) === '') {
+            throw new InvalidArgumentException('Konfigurasi ontologi wikidata_regions_path wajib berupa path yang tidak kosong.');
         }
 
         $wikidata = $configuration['wikidata'] ?? null;
@@ -31,7 +26,6 @@ final class OntologyConfiguration
         foreach ([
             'snapshot_path',
             'stale_snapshot_path',
-            'candidate_report_path',
             'destination_links_path',
             'destination_snapshot_path',
             'stale_destination_snapshot_path',

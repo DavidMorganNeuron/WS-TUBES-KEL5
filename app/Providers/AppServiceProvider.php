@@ -52,12 +52,10 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
-        $this->app->singleton(TurtleParser::class);
         $this->app->singleton(
             OpeningHoursResolver::class,
             fn (): OpeningHoursResolver => new OpeningHoursResolver((string) config('ontology.unknown_label')),
         );
-        $this->app->singleton(OntologyGraphMapper::class);
         $this->app->singleton(SparqlEscaper::class);
         $this->app->singleton(SparqlRowMapper::class);
         $this->app->singleton(SearchTokenizer::class);
@@ -142,11 +140,11 @@ class AppServiceProvider extends ServiceProvider
             $ontologyConfig = config('ontology');
             OntologyConfiguration::validate($ontologyConfig);
 
-            if ($ontologyConfig['driver'] === 'ttl') {
+            if ($app->environment('testing')) {
                 return new InMemoryDestinationSource(
                     parser: $app->make(TurtleParser::class),
                     graphMapper: $app->make(OntologyGraphMapper::class),
-                    ttlPath: $ontologyConfig['ttl_path'],
+                    ttlPath: database_path('ontology/wisata_sumut_v3.ttl'),
                     searchPlanner: $app->make(SearchPlanner::class),
                     cacheTtl: $ontologyConfig['cache_ttl'],
                 );

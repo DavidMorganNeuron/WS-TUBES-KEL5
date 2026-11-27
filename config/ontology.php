@@ -2,22 +2,6 @@
 
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Ontology Driver
-    |--------------------------------------------------------------------------
-    |
-    | Supported: "fuseki" or "ttl". Fuseki failures are reported explicitly;
-    | the local Turtle file is selected only when the ttl driver is configured.
-    |
-    */
-
-    'driver' => env('ONTOLOGY_DRIVER', 'fuseki'),
-
-    'ttl_path' => env('ONTOLOGY_V3_TTL_PATH', 'database/ontology/wisata_sumut_v3.ttl'),
-
-    'v2_source_path' => env('ONTOLOGY_V2_TTL_PATH', env('ONTOLOGY_TTL_PATH', 'database/ontology/wisata_sumut_v2.ttl')),
-
     'unknown_label' => '-',
 
     'namespaces' => [
@@ -108,7 +92,6 @@ return [
         'stale_destination_snapshot_path' => 'storage/app/wikidata/wikidata-destinasi-detail-stale.json',
         'snapshot_path' => 'database/ontology/external/wikidata-wilayah-detail.json',
         'stale_snapshot_path' => 'storage/app/wikidata/wikidata-wilayah-detail-stale.json',
-        'candidate_report_path' => 'docs/kandidat-tautan-wikidata.md',
         'allow_stale' => (bool) env('WIKIDATA_ALLOW_STALE', false),
     ],
 
